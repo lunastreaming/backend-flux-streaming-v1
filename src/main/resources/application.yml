@@ -11,7 +11,7 @@ spring:
     activate:
       on-profile: dev
   application:
-    name: lunastreaming
+    name: fluxstreaming
   server:
     port: 8080
   datasource:
@@ -39,7 +39,7 @@ spring:
     activate:
       on-profile: prod
   application:
-    name: lunastreaming
+    name: fluxstreaming
   server:
     port: 8080
   datasource:
@@ -54,7 +54,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   cors:
-    allowed-origins: https://lunaplataformas.com
+    allowed-origins: https://fluxstreaming.com
 
 app:
   jwt:

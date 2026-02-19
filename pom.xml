@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>lunastreaming</artifactId>
+	<artifactId>fluxstreaming</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>lunastreaming</name>
-	<description>Luna Streaming Project</description>
+	<name>fluxstreaming</name>
+	<description>Flux Streaming Project</description>
 	<url/>
 	<licenses>
 		<license/>
