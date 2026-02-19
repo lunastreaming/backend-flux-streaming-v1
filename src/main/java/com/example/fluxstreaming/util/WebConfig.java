@@ -13,7 +13,8 @@ import java.util.List;
 
 @Configuration
 public class WebConfig {
-    @Value("${spring.cors.allowed-origins}")
+
+    @Value("${spring.cors.allowed-origins:https://www.fluxstreaming.com,https://fluxstreaming.com}")
     private List<String> allowedOrigins;
 
     @Bean
