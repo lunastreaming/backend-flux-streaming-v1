@@ -14,12 +14,12 @@ import java.util.List;
 @Configuration
 public class WebConfig {
     @Value("${spring.cors.allowed-origins}")
-    private String allowedOrigins;
+    private List<String> allowedOrigins;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of(allowedOrigins));
+        cfg.setAllowedOrigins(allowedOrigins);
         cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         cfg.setAllowedHeaders(List.of("Authorization","Content-Type","Accept","Origin","X-Requested-With"));
         cfg.setExposedHeaders(List.of("Authorization"));

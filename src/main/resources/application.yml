@@ -54,7 +54,9 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   cors:
-    allowed-origins: https://fluxstreaming.com,https://www.fluxstreaming.com
+    allowed-origins:
+      - https://fluxstreaming.com
+      - https://www.fluxstreaming.com
 
 app:
   jwt:
