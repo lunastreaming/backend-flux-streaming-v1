@@ -92,6 +92,16 @@ public class SupplierController {
     }
 
 
+    @PatchMapping("stocks/{stockId}/renewal/refund")
+    public ResponseEntity<Void> refundRenewalByProvider(
+            @PathVariable Long stockId,
+            Principal principal
+    ) {
+        stockService.processProviderRenewalRefund(stockId, principal);
+        return ResponseEntity.noContent().build(); // Devuelve 204
+    }
+
+
     @PostMapping("/transfer-to-user")
     public ResponseEntity<Void> transfer(
             Principal principal,
