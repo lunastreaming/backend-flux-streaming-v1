@@ -1,5 +1,6 @@
 package com.example.fluxstreaming.service;
 
+import com.example.fluxstreaming.model.ProviderProfileEntity;
 import com.example.fluxstreaming.model.SettingEntity;
 import com.example.fluxstreaming.model.UserEntity;
 import com.example.fluxstreaming.model.WalletTransaction;
@@ -49,6 +50,10 @@ public class SupplierService {
         UserEntity seller = userRepository.findById(sellerId)
                 .orElseThrow(() -> new RuntimeException("Vendedor no encontrado"));
 
+        ProviderProfileEntity profile = supplier.getProviderProfile();
+        if (profile == null || !Boolean.TRUE.equals(profile.getCanTransfer())) {
+            throw new IllegalStateException("El proveedor no tiene permisos para realizar transferencias");
+        }
         // 4. Actualizar balances
         supplier.setBalance(supplier.getBalance().subtract(totalToDebit));
         seller.setBalance(seller.getBalance().add(amount));
