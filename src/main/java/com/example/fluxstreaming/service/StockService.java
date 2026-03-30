@@ -276,6 +276,11 @@ public class StockService {
         UserEntity buyer = userRepository.findByIdForUpdate(buyerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comprador no encontrado"));
 
+        // Validación con minúsculas
+        if (!"active".equalsIgnoreCase(buyer.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "La cuenta del usuario no está activa");
+        }
+
         // 2. Validaciones de acceso y seguridad
         if (!"seller".equals(buyer.getRole())) {
             throw new AccessDeniedException("El usuario no cuenta con los accesos para esta acción");
@@ -376,6 +381,11 @@ public class StockService {
             // Si no es UUID, buscar por username
             UserEntity user = userRepository.findByUsername(name)
                     .orElseThrow(() -> new AccessDeniedException("Usuario no encontrado: " + name));
+
+            // Validación con minúsculas
+            if (!"active".equalsIgnoreCase(user.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "La cuenta del usuario no está activa");
+            }
             return user.getId(); // o user.getProviderId() si aplica
         }
     }
