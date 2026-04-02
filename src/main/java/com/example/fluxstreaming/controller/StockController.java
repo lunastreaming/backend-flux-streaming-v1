@@ -233,4 +233,14 @@ public class StockController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/remove-multiple")
+    public ResponseEntity<Void> deleteMultiple(
+            @RequestBody List<Long> ids,
+            Principal principal) {
+
+        stockService.deleteMultipleStocks(ids, principal);
+        return ResponseEntity.noContent().build();
+    }
+
 }
