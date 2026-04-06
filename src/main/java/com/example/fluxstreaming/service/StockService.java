@@ -82,6 +82,44 @@ public class StockService {
     }
 
     @Transactional
+    public StockResponse republishStock(Long oldStockId, RepublishRequest request, Principal principal) {
+        // 1. Obtener el stock base (antes de borrarlo)
+        StockEntity oldStock = stockRepository.findById(oldStockId)
+                .orElseThrow(() -> new RuntimeException("Stock original no encontrado o ya eliminado"));
+
+        // 2. Seguridad: Validar que el producto pertenece al proveedor actual
+        UUID providerId = resolveProviderIdFromPrincipal(principal);
+        if (!providerId.equals(oldStock.getProduct().getProviderId())) {
+            throw new AccessDeniedException("No autorizado para operar sobre este producto");
+        }
+
+        // 3. Crear la nueva entidad (Clonación)
+        StockEntity newStock = StockEntity.builder()
+                .product(oldStock.getProduct())
+                .username(oldStock.getUsername())
+                .url(oldStock.getUrl())
+                .tipo(oldStock.getTipo())
+                .numeroPerfil(oldStock.getNumeroPerfil())
+                .password(request.password())
+                .pin(request.pin())
+                .status("active")
+                .createdAt(Instant.now())
+                .purchasePrice(oldStock.getPurchasePrice())
+                .build();
+
+        // 4. Guardar el nuevo registro
+        StockEntity saved = stockRepository.save(newStock);
+
+        // 5. ELIMINAR EL STOCK ANTIGUO
+        // Llamamos a tu método existente para que aplique el @SQLDelete (soft delete)
+        // y mantenga la coherencia de las validaciones.
+        this.deleteStock(oldStockId, principal);
+
+        // 6. Transformar y retornar el NUEVO stock
+        return stockBuilder.toStockResponse(saved);
+    }
+
+    @Transactional
     public List<StockResponse> createStocksFromList(List<StockResponse> requestStocks, Principal principal) {
         if (requestStocks == null || requestStocks.isEmpty()) {
             throw new IllegalArgumentException("Lista de stocks vacía");
