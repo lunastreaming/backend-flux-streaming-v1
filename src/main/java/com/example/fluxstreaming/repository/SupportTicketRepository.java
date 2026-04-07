@@ -4,6 +4,8 @@ import com.example.fluxstreaming.model.SupportTicketEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -28,5 +30,25 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicketEnti
 
 
     List<SupportTicketEntity> findByStockId(Long stockId);
+
+    @Query(
+            value = "SELECT t.* FROM support_tickets t " +
+                    "INNER JOIN stock s ON t.stock_id = s.id " +
+                    "WHERE t.client_id = :clientId " +
+                    "AND t.status = :status " +
+                    "AND s.deleted = false",
+            countQuery = "SELECT count(*) FROM support_tickets t " +
+                    "INNER JOIN stock s ON t.stock_id = s.id " +
+                    "WHERE t.client_id = :clientId " +
+                    "AND t.status = :status " +
+                    "AND s.deleted = false",
+            nativeQuery = true
+    )
+    Page<SupportTicketEntity> findByClientIdAndStatusWithActiveStock(
+            @Param("clientId") UUID clientId,
+            @Param("status") String status,
+            Pageable pageable
+    );
+
 
 }
