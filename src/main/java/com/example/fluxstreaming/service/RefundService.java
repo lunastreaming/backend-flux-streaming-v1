@@ -41,7 +41,7 @@ public class RefundService {
         validateActorIsAdmin(actorPrincipalName);
 
         // 2) cargar stock
-        StockEntity stock = stockRepository.findById(stockId)
+        StockEntity stock = stockRepository.findByIdWithLock(stockId)
                 .orElseThrow(() -> new IllegalArgumentException("stock_not_found"));
 
         if ("REFUND".equalsIgnoreCase(stock.getStatus())) {
@@ -258,7 +258,7 @@ public class RefundService {
         validateActorIsAdmin(actorPrincipalName);
 
         // 2) cargar stock
-        StockEntity stock = stockRepository.findById(stockId)
+        StockEntity stock = stockRepository.findByIdWithLock(stockId)
                 .orElseThrow(() -> new IllegalArgumentException("stock_not_found"));
 
         if ("REFUND".equalsIgnoreCase(stock.getStatus())) {
@@ -375,7 +375,7 @@ public class RefundService {
     @Transactional
     public Map<String, Object> refundStockAsProvider(Long stockId, UUID buyerId, Principal principal) {
         // 1) cargar stock
-        StockEntity stock = stockRepository.findById(stockId)
+        StockEntity stock = stockRepository.findByIdWithLock(stockId)
                 .orElseThrow(() -> new IllegalArgumentException("stock_not_found"));
 
         if ("REFUND".equalsIgnoreCase(stock.getStatus())) {
@@ -506,7 +506,7 @@ public class RefundService {
     @Transactional
     public Map<String, Object> refundStockFullAsProvider(Long stockId, UUID buyerId, Principal principal) {
         // 1) cargar stock
-        StockEntity stock = stockRepository.findById(stockId)
+        StockEntity stock = stockRepository.findByIdWithLock(stockId)
                 .orElseThrow(() -> new IllegalArgumentException("stock_not_found"));
 
         if ("REFUND".equalsIgnoreCase(stock.getStatus())) {
