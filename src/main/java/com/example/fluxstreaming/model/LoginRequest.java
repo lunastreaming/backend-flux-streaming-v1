@@ -11,9 +11,10 @@ import lombok.*;
 @AllArgsConstructor
 public class LoginRequest {
 
+
+    //@Size(min = 4, max = 20, message = "El usuario debe tener entre 4 y 20 caracteres")
+    //@Pattern(regexp = "^[a-zA-Z0-9]+$", message = "El usuario solo puede contener letras y números")
     @NotBlank(message = "El usuario es obligatorio")
-    @Size(min = 4, max = 20, message = "El usuario debe tener entre 4 y 20 caracteres")
-    @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "El usuario solo puede contener letras y números")
     public String username;
 
     @NotBlank(message = "La contraseña es obligatoria")
