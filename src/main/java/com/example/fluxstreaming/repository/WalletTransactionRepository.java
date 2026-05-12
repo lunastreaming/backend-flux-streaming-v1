@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -68,6 +69,23 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
             @Param("stockId") Long stockId,
             @Param("type") String type,
             @Param("status") String status
+    );
+
+    @Query(value = """
+    SELECT 
+        type as concepto, 
+        COUNT(*) as totalOperaciones, 
+        SUM(ABS(amount)) as ingresosTotales, -- Convertimos a positivo para la plataforma
+        currency as moneda
+    FROM wallet_transactions
+    WHERE type IN ('publish', 'password_change', 'phone_change')
+      AND LOWER(status) = 'approved'
+      AND created_at BETWEEN :startDate AND :endDate
+    GROUP BY type, currency
+    """, nativeQuery = true)
+    List<Object[]> findDirectIncomesByDateRange(
+            @Param("startDate") OffsetDateTime startDate,
+            @Param("endDate") OffsetDateTime endDate
     );
 
 }
