@@ -68,7 +68,8 @@ public class SupplierService {
                 .user(supplier)
                 .type("transfer")
                 .amount(totalToDebit.negate()) // proveedor paga monto + fee
-                .currency("PEN")
+                .feeAmount(fee)
+                .currency("USD")
                 .status("approved")
                 .createdAt(now)
                 .description("Transferencia al vendedor " + seller.getUsername() + " (incluye fee)")
@@ -80,7 +81,7 @@ public class SupplierService {
                 .user(seller)
                 .type("transfer")
                 .amount(amount) // vendedor recibe monto completo
-                .currency("PEN")
+                .currency("USD")
                 .status("approved")
                 .createdAt(now)
                 .description("Transferencia recibida del proveedor " + supplier.getUsername())

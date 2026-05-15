@@ -60,4 +60,8 @@ public class WalletTransaction {
     @JoinColumn(name = "stock_id")
     private StockEntity stock;
 
+
+    @Column(name = "fee_amount")
+    private BigDecimal feeAmount;
+
 }
