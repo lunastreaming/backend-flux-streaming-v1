@@ -5,6 +5,7 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface StockRepository extends JpaRepository<StockEntity, Long> {
+public interface StockRepository extends JpaRepository<StockEntity, Long>, JpaSpecificationExecutor<StockEntity> {
 
     List<StockEntity> findByProductId(UUID productId);
 
@@ -266,5 +267,8 @@ public interface StockRepository extends JpaRepository<StockEntity, Long> {
     @Query("SELECT s FROM StockEntity s WHERE s.id = :id")
     Optional<StockEntity> findByIdWithLock(@Param("id") Long id);
 
+
+    @Query("SELECT t.stock.id FROM SupportTicketEntity t JOIN t.stock s WHERE t.status IN :statuses AND s.buyer.id = :buyerId")
+    List<Long> findStockIdsByStatusInAndBuyerId(@Param("statuses") List<String> statuses, @Param("buyerId") UUID buyerId);
 }
 
