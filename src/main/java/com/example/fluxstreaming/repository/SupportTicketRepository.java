@@ -59,4 +59,11 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicketEnti
     void resolveOpenTicketsByStockId(@Param("stockId") Long stockId, @Param("now") Instant now);
 
 
+    @Modifying
+    @Query(value = "UPDATE support_tickets SET status = 'RESOLVED' " +
+            "WHERE status = 'OPEN' " +
+            "AND stock_id IN (SELECT id FROM stocks WHERE deleted = true)",
+            nativeQuery = true)
+    void resolveTicketsWithDeletedStocks();
+
 }
