@@ -94,4 +94,17 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
             @Param("endDate") OffsetDateTime endDate
     );
 
+    @Query("""
+        FROM WalletTransaction t
+        WHERE t.user.id = :userId 
+          AND t.type = :type
+          AND t.status = 'approved'
+        ORDER BY t.createdAt DESC
+        """)
+    List<WalletTransaction> findLatestApprovedByUserIdAndType(
+            @Param("userId") UUID userId,
+            @Param("type") String type,
+            Pageable pageable
+    );
+
 }

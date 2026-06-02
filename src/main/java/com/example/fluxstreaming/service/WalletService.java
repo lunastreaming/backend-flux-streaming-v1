@@ -3,6 +3,7 @@ package com.example.fluxstreaming.service;
 
 import com.example.fluxstreaming.builder.WalletBuilder;
 import com.example.fluxstreaming.model.*;
+import com.example.fluxstreaming.model.admin.TransactionResponseDto;
 import com.example.fluxstreaming.repository.SettingRepository;
 import com.example.fluxstreaming.util.FluxException;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.Principal;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.*;
 
 
@@ -544,5 +546,38 @@ public class WalletService {
 
         walletTransactionRepository.save(depositTx);
     }
+
+
+
+    private static final Set<String> ALLOWED_TYPES = Set.of("recharge", "purchase", "sale");
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<TransactionResponseDto> getLatestTransactions(UUID userId, String type, int limit) {
+        String lowerType = type.toLowerCase().trim();
+
+        if (!ALLOWED_TYPES.contains(lowerType)) {
+            throw new IllegalArgumentException("Tipo de transacción no válido para este reporte: " + type);
+        }
+
+        int safeLimit = Math.min(limit, 100);
+        Pageable pageable = PageRequest.of(0, safeLimit);
+
+        List<WalletTransaction> transactions = walletTransactionRepository.findLatestApprovedByUserIdAndType(userId, lowerType, pageable);
+
+        // Mapeamos la entidad al DTO convirtiendo el Instant a la hora de Perú
+        // Dentro del método de mapeo en tu servicio:
+        return transactions.stream()
+                .map(t -> new TransactionResponseDto(
+                        t.getId(),
+                        t.getType(),
+                        t.getAmount(),
+                        t.getCurrency(),
+                        t.getStatus(),
+                        t.getDescription(),
+                        t.getCreatedAt().atZone(ZoneId.of("America/Lima")) // Convierte el Instant UTC a la hora de Perú
+                ))
+                .toList();
+    }
+
 
 }
