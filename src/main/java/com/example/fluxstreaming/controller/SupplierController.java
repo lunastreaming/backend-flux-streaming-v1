@@ -31,6 +31,7 @@ public class SupplierController {
     private final ProviderProfileService providerProfileService;
 
     @PostMapping("/provider/stocks/{stockId}/refund")
+    @PreAuthorize("hasRole('provider')")
     public ResponseEntity<Map<String, Object>> refundStockAsProvider(
             @PathVariable("stockId") Long stockId,
             @RequestBody(required = false) RefundRequest req,
@@ -42,6 +43,7 @@ public class SupplierController {
     }
 
     @PostMapping("/provider/stocks/{stockId}/refund/full")
+    @PreAuthorize("hasRole('provider')")
     public ResponseEntity<Map<String, Object>> refundStockFullAsProvider(
             @PathVariable("stockId") Long stockId,
             @RequestBody(required = false) RefundRequest req,
@@ -63,6 +65,7 @@ public class SupplierController {
     }
 
     @GetMapping("/sales/provider/renewed")
+    @PreAuthorize("hasRole('provider')")
     public ResponseEntity<Page<StockResponse>> getProviderRenewedStocks(
             Principal principal,
             @PageableDefault(size = 20) Pageable pageable
@@ -81,6 +84,7 @@ public class SupplierController {
     }
 
     @PatchMapping("/{id}/renewal/approve")
+    @PreAuthorize("hasRole('provider')")
     public ResponseEntity<Void> approveRenewal(@PathVariable Long id) {
         try {
             stockService.approveRenewal(id);
