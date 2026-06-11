@@ -20,7 +20,14 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicketEnti
     List<SupportTicketEntity> findByStockIdInAndStatusIn(Collection<Long> stockIds, Collection<String> statuses);
 
     // tickets por clientId / providerId y estado
-    Page<SupportTicketEntity> findByClientIdAndStatus(UUID clientId, String status, Pageable pageable);
+    @Query("SELECT t FROM SupportTicketEntity t " +
+            "JOIN t.stock s " +
+            "WHERE t.client.id = :clientId " +
+            "AND t.status = 'OPEN'")
+    Page<SupportTicketEntity> findActiveTicketsWithActiveStocks(
+            @Param("clientId") UUID clientId,
+            Pageable pageable
+    );
 
     List<SupportTicketEntity> findByProviderIdAndStatus(UUID providerId, String status);
 
