@@ -1,5 +1,6 @@
 package com.example.fluxstreaming.repository;
 
+import com.example.fluxstreaming.model.PaymentMethodReportDTO;
 import com.example.fluxstreaming.model.WalletTransaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,7 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -93,6 +96,49 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
             @Param("startDate") OffsetDateTime startDate,
             @Param("endDate") OffsetDateTime endDate
     );
+
+
+
+
+
+    interface BalanceMovimientosProyeccion {
+        Long getTotalRecargasContador();
+        java.math.BigDecimal getTotalRecargasMonto();
+        Long getTotalRetirosContador();
+        java.math.BigDecimal getTotalRetirosMonto();
+    }
+
+    @Query(value = """
+    SELECT 
+        COUNT(CASE WHEN t.type = 'recharge' THEN 1 END) AS totalRecargasContador,
+        COALESCE(SUM(CASE WHEN t.type = 'recharge' THEN t.amount END), 0) AS totalRecargasMonto,
+        COUNT(CASE WHEN t.type = 'withdrawal' THEN 1 END) AS totalRetirosContador,
+        COALESCE(SUM(CASE WHEN t.type = 'withdrawal' THEN t.amount END), 0) AS totalRetirosMonto
+    FROM public.wallet_transactions t
+    WHERE t.status IN ('approved', 'confirmed')
+      AND t.created_at BETWEEN :startDate AND :endDate
+    """, nativeQuery = true)
+    BalanceMovimientosProyeccion findBalanceMovimientosEnRango(
+            @Param("startDate") ZonedDateTime startDate,
+            @Param("endDate") ZonedDateTime endDate
+    );
+
+
+    @Query("SELECT new com.example.fluxstreaming.model.PaymentMethodReportDTO(" +
+            "COALESCE(pm.name, 'Sin asignar'), " +
+            "COALESCE(pm.color, '#9aa0a6'), " +
+            "COUNT(t.id), " +
+            "SUM(t.amount)) " +
+            "FROM WalletTransaction t " +
+            "LEFT JOIN t.paymentMethod pm " +
+            "WHERE t.status = 'approved' " +
+            "  AND t.type = 'recharge' " +
+            "  AND t.approvedAt >= :startDate " +
+            "  AND t.approvedAt <= :endDate " +
+            "GROUP BY pm.name, pm.color")
+    List<PaymentMethodReportDTO> getReportByPaymentMethods(
+            @Param("startDate") Instant startDate,
+            @Param("endDate") Instant endDate);
 
     @Query("""
         FROM WalletTransaction t

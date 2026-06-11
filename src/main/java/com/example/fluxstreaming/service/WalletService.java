@@ -4,6 +4,7 @@ package com.example.fluxstreaming.service;
 import com.example.fluxstreaming.builder.WalletBuilder;
 import com.example.fluxstreaming.model.*;
 import com.example.fluxstreaming.model.admin.TransactionResponseDto;
+import com.example.fluxstreaming.repository.PaymentMethodRepository;
 import com.example.fluxstreaming.repository.SettingRepository;
 import com.example.fluxstreaming.util.FluxException;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,11 @@ public class WalletService {
 
     private final SettingRepository settingRepository;
 
+    private final PaymentMethodRepository paymentMethodRepository;
+
     private static final int PAGE_SIZE = 100;
+
+    private static final ZoneId PERU_ZONE = ZoneId.of("America/Lima");
 
     public WalletTransaction requestRecharge(UUID userId, BigDecimal amount, boolean isSoles) {
         UserEntity user = userRepository.findById(userId)
@@ -183,7 +188,7 @@ public class WalletService {
                 .findByStatusAndUserRoleAndTypes("pending", role, types);
 
         // Obtenemos el valor numérico directamente
-        BigDecimal discountFactor = settingRepository.findByKeyIgnoreCase("supplierDiscount")
+        BigDecimal discountFactor = settingRepository.findByKeyIgnoreCase("supplierWithdrawalDiscount")
                 .map(SettingEntity::getValueNum)
                 .orElse(BigDecimal.ZERO);
 
@@ -348,12 +353,12 @@ public class WalletService {
             throw new IllegalArgumentException("Monto inválido");
         }
 
-        // 1) obtener supplierDiscount desde SettingService
+        // 1) obtener supplierWithdrawalDiscount desde SettingService
         BigDecimal supplierDiscountFraction = BigDecimal.ZERO; // fracción: 0.15 = 15%
         List<SettingResponse> settings = settingService.getSettings();
         if (settings != null) {
             for (SettingResponse s : settings) {
-                if ("supplierDiscount".equalsIgnoreCase(s.getKey())) {
+                if ("supplierWithdrawalDiscount".equalsIgnoreCase(s.getKey())) {
                     BigDecimal raw = s.getValueNum() != null ? s.getValueNum() : BigDecimal.ZERO;
                     // Si el valor está en formato entero porcentual (ej. 15) lo convertimos a fracción (0.15).
                     // Si ya viene como 0.15, lo usamos tal cual.

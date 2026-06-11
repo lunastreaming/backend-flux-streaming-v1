@@ -1,6 +1,9 @@
 package com.example.fluxstreaming.controller;
 
+import com.example.fluxstreaming.model.BalanceMovimientosDTO;
+import com.example.fluxstreaming.model.CategoriaVentasDTO;
 import com.example.fluxstreaming.model.DashboardIncomeDTO;
+import com.example.fluxstreaming.model.PaymentMethodReportDTO;
 import com.example.fluxstreaming.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -38,6 +42,40 @@ public class AdminDashboardController {
 
         List<DashboardIncomeDTO> data = dashboardService.getDirectIncomes(finalStart, finalEnd);
         return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/ventas-categoria")
+    @PreAuthorize("hasRole('admin')")
+    public ResponseEntity<List<CategoriaVentasDTO>> getVentasPorCategoria(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+
+        List<CategoriaVentasDTO> report = dashboardService.obtenerVentasPorCategoria(startDate, endDate);
+        return ResponseEntity.ok(report);
+    }
+
+    @GetMapping("/balance-movimientos")
+    @PreAuthorize("hasRole('admin')")
+    public ResponseEntity<BalanceMovimientosDTO> getBalanceMovimientos(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+
+        BalanceMovimientosDTO balance = dashboardService.obtenerBalanceMovimientos(startDate, endDate);
+        return ResponseEntity.ok(balance);
+    }
+
+    @GetMapping("/income-by-methods")
+    public ResponseEntity<List<PaymentMethodReportDTO>> getIncomeReport(
+            @RequestParam String startDate, // Formato esperado: YYYY-MM-DD
+            @RequestParam String endDate    // Formato esperado: YYYY-MM-DD
+    ) {
+        return ResponseEntity.ok(dashboardService.getIncomeByMethods(startDate, endDate));
     }
 
 }

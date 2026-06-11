@@ -64,4 +64,8 @@ public class WalletTransaction {
     @Column(name = "fee_amount")
     private BigDecimal feeAmount;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_method_id", nullable = true)
+    private PaymentMethodEntity paymentMethod; // <-- ESTO EXISTE AQUÍ
+
 }
