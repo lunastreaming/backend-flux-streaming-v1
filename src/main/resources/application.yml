@@ -33,6 +33,11 @@ app:
     secret: "Z2VuZXJhdGVkLXJhbmRvbS1zZWNyZXQtdGVzdC1iYXNlNjQ="
     validity-ms: 43200000
 
+
+whatsapp:
+  service-url: "https://localhost:3000/instance/send-otp"
+  instance-id: "flux-streaming"
+
 ---
 spring:
   config:
@@ -62,3 +67,7 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     validity-ms: 43200000
+
+whatsapp:
+  service-url: ${WHATSAPP_SERVICE_URL:http://localhost:3000/instance/send-otp}
+  instance-id: ${WHATSAPP_INSTANCE_ID:mi-primer-bot}
