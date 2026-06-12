@@ -48,8 +48,10 @@ public class WalletController {
 
 
     @PostMapping("/admin/approve/{txId}")
-    public ResponseEntity<?> approveRecharge(@PathVariable UUID txId, Principal principal) {
-        WalletTransaction tx = walletService.approveRecharge(txId, principal.getName());
+    public ResponseEntity<?> approveRecharge(@PathVariable UUID txId,
+                                             @RequestBody ApproveRequestDto request,
+                                             Principal principal) {
+        WalletTransaction tx = walletService.approveRecharge(txId, request.paymentMethodId(), principal.getName());
         return ResponseEntity.ok(tx);
     }
 
