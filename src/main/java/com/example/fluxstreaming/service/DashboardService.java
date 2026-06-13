@@ -4,6 +4,7 @@ import com.example.fluxstreaming.model.BalanceMovimientosDTO;
 import com.example.fluxstreaming.model.CategoriaVentasDTO;
 import com.example.fluxstreaming.model.DashboardIncomeDTO;
 import com.example.fluxstreaming.model.PaymentMethodReportDTO;
+import com.example.fluxstreaming.model.admin.ProveedorCategoriaReporteDTO;
 import com.example.fluxstreaming.repository.StockRepository;
 import com.example.fluxstreaming.repository.WalletTransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -121,5 +123,28 @@ public class DashboardService {
 
         return repository.getReportByPaymentMethods(start, end);
     }
+
+    @Transactional(readOnly = true)
+    public List<ProveedorCategoriaReporteDTO> obtenerReporteCategoriasPorProveedor(
+            UUID providerId, LocalDateTime startDate, LocalDateTime endDate) {
+
+        // Rango por defecto si no envían fechas
+        if (startDate == null) startDate = LocalDateTime.now().minusDays(30);
+        if (endDate == null) endDate = LocalDateTime.now();
+
+        return repository.findReporteCategoriasPorProveedor(providerId, startDate, endDate)
+                .stream()
+                .map(p -> new ProveedorCategoriaReporteDTO(
+                        p.getCategoryId(),
+                        p.getCategoriaNombre(),
+                        p.getCantidadVentas(),
+                        p.getMontoVentas(),
+                        p.getCantidadRenovaciones(),
+                        p.getMontoRenovaciones(),
+                        p.getTotalRecaudado()
+                ))
+                .toList();
+    }
+
 
 }
