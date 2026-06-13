@@ -35,7 +35,7 @@ app:
 
 
 whatsapp:
-  service-url: "https://localhost:3000/instance/send-otp"
+  service-url: "https://localhost:3001/instance/send-otp"
   instance-id: "flux-streaming"
 
 ---
