@@ -1,6 +1,7 @@
 package com.example.fluxstreaming.repository;
 
 import com.example.fluxstreaming.model.UserEntity;
+import com.example.fluxstreaming.model.UserSummary;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -70,11 +71,10 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     boolean existsByPhone(String phone);
 
     @Query("SELECT u FROM UserEntity u " +
-            "LEFT JOIN FETCH u.providerProfile " +
             "WHERE u.role IN :roles AND " +
             "(:search IS NULL OR " +
-            "LOWER(CAST(u.username AS string)) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR " +
-            "CAST(u.phone AS string) LIKE CONCAT('%', CAST(:search AS string), '%'))")
+            "LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "u.phone LIKE CONCAT('%', :search, '%'))")
     Page<UserEntity> findAllByRolesAndSearch(
             @Param("roles") List<String> roles,
             @Param("search") String search,

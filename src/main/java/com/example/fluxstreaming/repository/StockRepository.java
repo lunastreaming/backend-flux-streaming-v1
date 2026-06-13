@@ -279,44 +279,56 @@ public interface StockRepository extends JpaRepository<StockEntity, Long>, JpaSp
     }
 
     @Query(value = """
+WITH compras_stock AS (
+    -- A. Para las compras, nos basamos en los stocks vendidos.
+    -- Si en el futuro guardas el stock_id en wallet_transactions, esta query seguirá funcionando perfectamente.
     SELECT 
-        c.name AS categoria,
-        
-        -- 1. Contamos TODAS las ventas físicas en stock + TODAS las renovaciones extras en wallet
-        (COUNT(DISTINCT s.id) + COALESCE(COUNT(DISTINCT wt_ren.id), 0)) AS cantidadVendida,
-        
-        -- 2. Sumamos el dinero real (Transacciones de compra O el precio base del stock si se vendió fuera de la wallet) + Renovaciones
-        (
-            COALESCE(SUM(DISTINCT CASE WHEN wt_pub.type = 'purchase' THEN wt_pub.amount END), 
-                     SUM(DISTINCT CASE WHEN s.sold_at IS NOT NULL THEN s.purchase_price END)) 
-            + 
-            COALESCE(SUM(DISTINCT CASE WHEN wt_ren.type = 'renewal' THEN wt_ren.amount END), 0)
-        ) AS totalRecaudado
-
-    FROM public.category c
-    INNER JOIN public.products p ON p.category_id = c.id
-    INNER JOIN public.stock s ON s.product_id = p.id
-    
-    -- LEFT JOIN A: Captura la transacción de COMPRA inicial si existe
-    LEFT JOIN public.wallet_transactions wt_pub ON wt_pub.stock_id = s.id 
-         AND wt_pub.type = 'purchase' 
-         AND wt_pub.status IN ('approved', 'confirmed')
-         
-    -- LEFT JOIN B: Captura TODAS las transacciones de RENOVACIÓN sucesivas
-    LEFT JOIN public.wallet_transactions wt_ren ON wt_ren.stock_id = s.id 
-         AND wt_ren.type = 'renewal' 
-         AND wt_ren.status IN ('approved', 'confirmed')
-         AND wt_ren.created_at BETWEEN :startDate AND :endDate
-
-    -- Filtramos que el stock haya tenido movimiento (Venta o Renovación) en el rango de fechas
-    WHERE (
-        (s.sold_at BETWEEN :startDate AND :endDate) 
-        OR 
-        (wt_ren.created_at BETWEEN :startDate AND :endDate)
-    )
-    GROUP BY c.name
-    ORDER BY cantidadVendida DESC
-    """, nativeQuery = true)
+        p.category_id,
+        COUNT(s.id) AS cant_ventas,
+        -- Multiplicamos por -1 solo si el monto es negativo, si no, usamos el precio del producto.
+        SUM(COALESCE(
+            CASE WHEN wt.amount < 0 THEN wt.amount * -1 ELSE wt.amount END, 
+            p.sale_price
+        )) AS monto_ventas
+    FROM public.stock s
+    INNER JOIN public.products p ON s.product_id = p.id
+    LEFT JOIN public.wallet_transactions wt ON wt.stock_id = s.id 
+        AND wt.type = 'purchase' 
+        AND LOWER(wt.status) IN ('approved', 'applied', 'confirmed')
+    WHERE s.sold_at BETWEEN :startDate AND :endDate
+      AND s.deleted = false
+    GROUP BY p.category_id
+),
+renovaciones_stock AS (
+    -- B. Para las renovaciones, como SÍ tienen stock_id, las agrupamos directo.
+    -- Multiplicamos el monto por -1 para convertir el cobro negativo en recaudación positiva.
+    SELECT 
+        p.category_id,
+        COUNT(wt.id) AS cant_renovaciones,
+        SUM(wt.amount * -1) AS monto_renovaciones
+    FROM public.wallet_transactions wt
+    INNER JOIN public.stock s ON wt.stock_id = s.id
+    INNER JOIN public.products p ON s.product_id = p.id
+    WHERE wt.type = 'renewal'
+      AND LOWER(wt.status) IN ('approved', 'applied', 'confirmed')
+      AND wt.created_at BETWEEN :startDate AND :endDate
+    GROUP BY p.category_id
+),
+universidad_categorias AS (
+    SELECT category_id FROM compras_stock
+    UNION
+    SELECT category_id FROM renovaciones_stock
+)
+SELECT 
+    c.name AS categoria,
+    ((COALESCE(cs.cant_ventas, 0) + COALESCE(rs.cant_renovaciones, 0))::int8) AS cantidadVendida,
+    ((COALESCE(cs.monto_ventas, 0.00) + COALESCE(rs.monto_renovaciones, 0.00))::numeric(20,2)) AS totalRecaudado
+FROM universidad_categorias uc
+INNER JOIN public.category c ON c.id = uc.category_id
+LEFT JOIN compras_stock cs ON cs.category_id = uc.category_id
+LEFT JOIN renovaciones_stock rs ON rs.category_id = uc.category_id
+ORDER BY cantidadVendida DESC
+""", nativeQuery = true)
     List<CategoriaVentasProyeccion> findVentasYRenovacionesHibrido(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate

@@ -176,16 +176,14 @@ public class UserService {
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        List<String> rolesToFilter;
-        if ("seller".equalsIgnoreCase(role)) {
-            rolesToFilter = Arrays.asList("seller", "user");
-        } else {
-            rolesToFilter = Collections.singletonList(role);
-        }
+        List<String> rolesToFilter = "seller".equalsIgnoreCase(role)
+                ? Arrays.asList("seller", "user")
+                : Collections.singletonList(role);
 
-        // Usamos el nuevo método del repositorio que maneja search si no es null
+        // Recupera la página de entidades de forma limpia y rápida
         Page<UserEntity> users = userRepository.findAllByRolesAndSearch(rolesToFilter, search, pageable);
 
+        // Tu mapper procesa todo como siempre
         return users.map(UserMapper::toSummary);
     }
 
