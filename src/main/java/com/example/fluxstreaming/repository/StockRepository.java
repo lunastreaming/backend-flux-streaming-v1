@@ -331,5 +331,6 @@ ORDER BY cantidadVendida DESC
             @Param("endDate") LocalDateTime endDate
     );
 
+
 }
 
