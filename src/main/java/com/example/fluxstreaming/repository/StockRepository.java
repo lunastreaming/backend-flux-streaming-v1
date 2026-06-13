@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -272,15 +273,18 @@ public interface StockRepository extends JpaRepository<StockEntity, Long>, JpaSp
     @Query("SELECT t.stock.id FROM SupportTicketEntity t JOIN t.stock s WHERE t.status IN :statuses AND s.buyer.id = :buyerId")
     List<Long> findStockIdsByStatusInAndBuyerId(@Param("statuses") List<String> statuses, @Param("buyerId") UUID buyerId);
 
-    interface CategoriaVentasProyeccion {
+    public interface CategoriaVentasProyeccion {
         String getCategoria();
-        Long getCantidadVendida();
-        java.math.BigDecimal getTotalRecaudado();
+        Long getCantidadVentas();
+        BigDecimal getMontoVentas();
+        Long getCantidadRenovaciones();
+        BigDecimal getMontoRenovaciones();
+        Long getTotalUnidades();
+        BigDecimal getTotalRecaudado();
     }
 
     @Query(value = """
 WITH compras_stock AS (
-    -- A. Filtramos las transacciones de tipo 'purchase' usando created_at convertido a hora Perú
     SELECT 
         p.category_id,
         COUNT(wt.id) AS cant_ventas,
@@ -290,13 +294,12 @@ WITH compras_stock AS (
     INNER JOIN public.products p ON s.product_id = p.id
     WHERE wt.type = 'purchase' 
       AND LOWER(wt.status) IN ('approved', 'applied', 'confirmed')
-      -- AJUSTE: Sincroniza el tiempo del servidor de Ohio con la hora de Perú
-      AND (wt.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Lima')::timestamp BETWEEN :startDate AND :endDate
+      -- Modificación aquí: Convertimos la hora de la BD de UTC a tu hora local (Ej: America/Lima)
+      AND (wt.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Lima') BETWEEN :startDate AND :endDate
       AND s.deleted = false
     GROUP BY p.category_id
 ),
 renovaciones_stock AS (
-    -- B. Filtramos las transacciones de tipo 'renewal' usando created_at convertido a hora Perú
     SELECT 
         p.category_id,
         COUNT(wt.id) AS cant_renovaciones,
@@ -306,8 +309,8 @@ renovaciones_stock AS (
     INNER JOIN public.products p ON s.product_id = p.id
     WHERE wt.type = 'renewal'
       AND LOWER(wt.status) IN ('approved', 'applied', 'confirmed')
-      -- AJUSTE: Sincroniza el tiempo del servidor de Ohio con la hora de Perú
-      AND (wt.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Lima')::timestamp BETWEEN :startDate AND :endDate
+      -- Modificación aquí también
+      AND (wt.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Lima') BETWEEN :startDate AND :endDate
       AND s.deleted = false
     GROUP BY p.category_id
 ),
@@ -318,13 +321,17 @@ universidad_categorias AS (
 )
 SELECT 
     c.name AS categoria,
-    ((COALESCE(cs.cant_ventas, 0) + COALESCE(rs.cant_renovaciones, 0))::int8) AS cantidadVendida,
+    (COALESCE(cs.cant_ventas, 0)::int8) AS cantidadVentas,
+    (COALESCE(cs.monto_ventas, 0.00)::numeric(20,2)) AS montoVentas,
+    (COALESCE(rs.cant_renovaciones, 0)::int8) AS cantidadRenovaciones,
+    (COALESCE(rs.monto_renovaciones, 0.00)::numeric(20,2)) AS montoRenovaciones,
+    ((COALESCE(cs.cant_ventas, 0) + COALESCE(rs.cant_renovaciones, 0))::int8) AS totalUnidades,
     ((COALESCE(cs.monto_ventas, 0.00) + COALESCE(rs.monto_renovaciones, 0.00))::numeric(20,2)) AS totalRecaudado
 FROM universidad_categorias uc
 INNER JOIN public.category c ON c.id = uc.category_id
 LEFT JOIN compras_stock cs ON cs.category_id = uc.category_id
 LEFT JOIN renovaciones_stock rs ON rs.category_id = uc.category_id
-ORDER BY cantidadVendida DESC
+ORDER BY totalRecaudado DESC
 """, nativeQuery = true)
     List<CategoriaVentasProyeccion> findVentasYRenovacionesHibrido(
             @Param("startDate") LocalDateTime startDate,
