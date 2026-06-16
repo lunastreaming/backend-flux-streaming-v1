@@ -63,11 +63,6 @@ public interface StockRepository extends JpaRepository<StockEntity, Long>, JpaSp
             Pageable pageable
     );
 
-
-
-    // Busca el primer stock activo de un producto
-    Optional<StockEntity> findFirstByProductIdAndStatus(UUID productId, String status);
-
     // Si quieres traer todos los activos
     List<StockEntity> findByProductIdAndStatus(Long productId, String status);
 
@@ -213,10 +208,7 @@ public interface StockRepository extends JpaRepository<StockEntity, Long>, JpaSp
     );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query(value = "SELECT s FROM StockEntity s WHERE s.product.id = :productId AND s.status = 'active' LIMIT 1")
-    Optional<StockEntity> findFirstByProductIdAndStatusWithLock(@Param("productId") UUID productId, @Param("status") String status);
-
-
+    Optional<StockEntity> findFirstByProductIdAndStatus(UUID productId, String status);
 
     // Filtro para usuarios específicos con estados permitidos y rango de fecha de vencimiento
     Page<StockEntity> findByBuyerIdAndStatusInAndEndAtBetween(

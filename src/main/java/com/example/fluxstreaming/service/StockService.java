@@ -327,7 +327,7 @@ public class StockService {
 
         // 3. Bloqueamos y obtenemos el STOCK (Evita que dos personas compren el mismo)
         // Al usar findFirst...WithLock, el segundo hilo esperará aquí hasta que el primero haga commit.
-        StockEntity stock = stockRepository.findFirstByProductIdAndStatusWithLock(productId, "active")
+        StockEntity stock = stockRepository.findFirstByProductIdAndStatus(productId, "active")
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ya no hay stock disponible para este producto"));
 
         ProductEntity product = stock.getProduct();
